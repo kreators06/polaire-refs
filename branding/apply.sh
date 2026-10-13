@@ -10,6 +10,7 @@ UP="${1:?usage: apply.sh <dossier karakeep>}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export APP_NAME="${APP_NAME:-Polaire Refs}"
 export APP_DESCRIPTION="${APP_DESCRIPTION:-Base de références créatives de Polaire Studios.}"
+export AI_MODEL="${AI_MODEL:-claude-opus-5-5}"
 WEB="$UP/apps/web"
 
 # Remplace via une expression perl et échoue si le fichier n'a pas changé.
@@ -60,5 +61,12 @@ patch_file "$UP/packages/shared-react/components/ui/button.tsx" 's/\brounded-md\
 
 echo "→ Interface en français par défaut"
 patch_file "$WEB/lib/userLocalSettings/types.ts" 's/lang: z\.string\(\)\.optional\(\)\.default\("en"\)/lang: z.string().optional().default("fr")/'
+
+echo "→ Tagging par Claude ($AI_MODEL)"
+# Karakeep ne parle que le format OpenAI : on passe par la passerelle compatible
+# d'Anthropic. Elle ignore response_format, d'où la sortie « plain » que Karakeep
+# sait analyser. Ce sont des valeurs par défaut : l'environnement du conteneur
+# peut les remplacer. La clé reste dans Coolify (OPENAI_API_KEY = clé Claude).
+patch_file "$UP/docker/Dockerfile" 's/^(FROM aio_builder AS aio\n)/$1ENV OPENAI_BASE_URL=https:\/\/api.anthropic.com\/v1\/ \\\n    INFERENCE_TEXT_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_IMAGE_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_OUTPUT_SCHEMA=plain \\\n    INFERENCE_LANG=french \\\n    INFERENCE_MAX_OUTPUT_TOKENS=4096 \\\n    INFERENCE_JOB_TIMEOUT_SEC=120\n/m'
 
 echo "Charte Polaire appliquée."

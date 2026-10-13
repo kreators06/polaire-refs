@@ -17,6 +17,12 @@ Ensuite, dans Coolify, remplacer le tag de l'image du service « Web » par la n
 
 Si une nouvelle version de Karakeep déplace un fichier modifié, `apply.sh` s'arrête avec le message « motif introuvable » : il faut alors ajuster le script.
 
+## Tagging automatique par Claude
+
+L'image est préréglée pour que Karakeep tague les références avec Claude (`claude-opus-5-5`, tags en français), via la passerelle compatible OpenAI de l'API Anthropic (`https://api.anthropic.com/v1/`). Il suffit de mettre une clé API Claude (platform.claude.com → API keys) dans la variable `SERVICE_OPENAI_API_KEY` du service dans Coolify, puis de redémarrer.
+
+Pour changer de modèle, modifier `AI_MODEL` dans `branding/apply.sh` et recompiler, ou définir `INFERENCE_TEXT_MODEL` / `INFERENCE_IMAGE_MODEL` dans l'environnement du conteneur.
+
 ## Polices
 
 Aucun fichier de police n'est publié ici (licences restreintes). L'interface charge Area depuis le kit Adobe Fonts de Polaire (`amt1dky`) ; le domaine `refs.polairestudios.com` doit être autorisé dans ce kit, sinon l'interface s'affiche en Helvetica Neue.
