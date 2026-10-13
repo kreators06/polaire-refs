@@ -1,0 +1,94 @@
+name: Image Polaire Refs
+
+# Compile Karakeep habillé à la charte Polaire et publie l'image sur GHCR.
+# - Lancement manuel : onglet Actions → « Image Polaire Refs » → Run workflow.
+# - Chaque lundi : compile la dernière version de Karakeep si elle n'existe pas encore.
+on:
+  workflow_dispatch:
+    inputs:
+      karakeep_version:
+        description: "Version de Karakeep (tag GitHub, ex. v0.33.2). Vide = dernière version."
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: image-polaire-refs
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Choisir la version de Karakeep
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.karakeep_version }}
+        run: |
+          tag="${INPUT_VERSION:-$(gh api repos/karakeep-app/karakeep/releases/latest --jq .tag_name)}"
+          owner="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/$owner/polaire-refs" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Déjà compilée ?
+        id: exists
+        if: github.event_name == 'schedule'
+        run: |
+          if docker buildx imagetools inspect "${{ steps.v.outputs.image }}:${{ steps.v.outputs.version }}" > /dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "L'image ${{ steps.v.outputs.version }} existe déjà, rien à faire."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.exists.outputs.skip != 'true'
+        with:
+          path: polaire
+
+      - uses: actions/checkout@v4
+        if: steps.exists.outputs.skip != 'true'
+        with:
+          repository: karakeep-app/karakeep
+          ref: ${{ steps.v.outputs.tag }}
+          path: upstream
+
+      - name: Appliquer la charte Polaire
+        if: steps.exists.outputs.skip != 'true'
+        run: bash polaire/branding/apply.sh upstream
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.exists.outputs.skip != 'true'
+
+      - name: Compiler et publier
+        if: steps.exists.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: upstream
+          file: upstream/docker/Dockerfile
+          target: aio
+          platforms: linux/amd64
+          build-args: SERVER_VERSION=${{ steps.v.outputs.version }}
+          push: true
+          tags: |
+            ${{ steps.v.outputs.image }}:${{ steps.v.outputs.version }}
+            ${{ steps.v.outputs.image }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.title=Polaire Refs
+            org.opencontainers.image.description=Karakeep ${{ steps.v.outputs.version }} habillé à la charte Polaire Studios
+            org.opencontainers.image.licenses=AGPL-3.0
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

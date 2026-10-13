@@ -1,0 +1,78 @@
+
+/* ------------------------------------------------------------------
+   Charte Polaire Studios (V2), ajoutée à la fin du thème Karakeep.
+   Clair = ton papier, sombre = ton encre. Le jaune reste réservé à
+   la sélection de texte : jamais en aplat.
+   ------------------------------------------------------------------ */
+:root {
+  --background: 70 33.3% 96.5%; /* papier #F8F9F3 */
+  --foreground: 37.5 14.8% 10.6%; /* encre #1F1C17 */
+
+  --card: 0 0% 100%;
+  --card-foreground: 37.5 14.8% 10.6%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 37.5 14.8% 10.6%;
+
+  --primary: 37.5 14.8% 10.6%;
+  --primary-foreground: 70 33.3% 96.5%;
+
+  --secondary: 67.5 16% 90.2%; /* os #E9EAE2 */
+  --secondary-foreground: 37.5 14.8% 10.6%;
+
+  --muted: 67.5 16% 90.2%;
+  --muted-foreground: 40 7.5% 39%; /* encre adoucie #6B665C */
+
+  --accent: 67.5 16% 90.2%;
+  --accent-foreground: 37.5 14.8% 10.6%;
+
+  --destructive: 7.2 73.4% 39.8%; /* #B02D1B */
+  --destructive-foreground: 70 33.3% 96.5%;
+
+  --border: 70 9.7% 87.8%; /* encre à 10 % */
+  --input: 60 5.7% 79.2%; /* encre à 20 % */
+  --ring: 37.5 14.8% 10.6%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 37.5 14.8% 10.6%; /* encre #1F1C17 */
+  --foreground: 67.5 16% 90.2%; /* os #E9EAE2 */
+
+  --card: 37.5 10.3% 15.3%;
+  --card-foreground: 67.5 16% 90.2%;
+
+  --popover: 37.5 10.3% 15.3%;
+  --popover-foreground: 67.5 16% 90.2%;
+
+  --primary: 67.5 16% 90.2%;
+  --primary-foreground: 37.5 14.8% 10.6%;
+
+  --secondary: 45 8.5% 18.4%; /* os à 10 % */
+  --secondary-foreground: 67.5 16% 90.2%;
+
+  --muted: 45 8.5% 18.4%;
+  --muted-foreground: 60 3.7% 62.9%; /* os à 66 % */
+
+  --accent: 45 8.5% 18.4%;
+  --accent-foreground: 67.5 16% 90.2%;
+
+  --destructive: 8 80.6% 63.5%; /* #ED6B57 */
+  --destructive-foreground: 37.5 14.8% 10.6%;
+
+  --border: 45 5.1% 30.6%; /* os à 25 % */
+  --input: 45 5.1% 30.6%;
+  --ring: 67.5 16% 90.2%;
+}
+
+/* Area (kit Adobe Fonts de Polaire), Helvetica Neue si le kit ne charge pas. */
+body {
+  font-family: "area-normal", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: #ffeb00;
+  color: #1f1c17;
+}
