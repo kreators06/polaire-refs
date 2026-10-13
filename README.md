@@ -23,6 +23,14 @@ L'image est préréglée pour que Karakeep tague les références avec Claude (`
 
 Pour changer de modèle, modifier `AI_MODEL` dans `branding/apply.sh` et recompiler, ou définir `INFERENCE_TEXT_MODEL` / `INFERENCE_IMAGE_MODEL` dans l'environnement du conteneur.
 
+### Grille de tags
+
+`branding/tagging.ts` définit la grille commune à tous les comptes : format, intérêt, technique, ton et thème (83 tags), ainsi que les consignes envoyées à Claude pour les liens, les images et les résumés. Ces consignes passent avant les règles personnelles de chaque compte (Paramètres → IA → Règles de tagging), et l'aperçu du prompt les affiche.
+
+Claude ne peut poser que des tags de la grille, ou de la liste « Tags sélectionnés » d'un compte. Une autre proposition est ignorée, et une variante d'écriture (« Plan Séquence ») est ramenée au tag de la grille (« plan-séquence »).
+
+Pour modifier la grille, éditer `branding/tagging.ts`, recompiler l'image (onglet **Actions**), puis redéployer dans Coolify. Pour re-taguer les références existantes : Administration → Actions → regénérer les tags IA de tous les favoris.
+
 ## Polices
 
 Aucun fichier de police n'est publié ici (licences restreintes). L'interface charge Area depuis le kit Adobe Fonts de Polaire (`amt1dky`) ; le domaine `refs.polairestudios.com` doit être autorisé dans ce kit, sinon l'interface s'affiche en Helvetica Neue.

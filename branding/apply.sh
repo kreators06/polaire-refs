@@ -65,8 +65,24 @@ patch_file "$WEB/lib/userLocalSettings/types.ts" 's/lang: z\.string\(\)\.optiona
 echo "→ Tagging par Claude ($AI_MODEL)"
 # Karakeep ne parle que le format OpenAI : on passe par la passerelle compatible
 # d'Anthropic. Elle ignore response_format, d'où la sortie « plain » que Karakeep
-# sait analyser. Ce sont des valeurs par défaut : l'environnement du conteneur
+# sait analyser ; le contexte passe à 4096 tokens car la grille Polaire en
+# occupe environ 1300. Ce sont des valeurs par défaut : l'environnement du conteneur
 # peut les remplacer. La clé reste dans Coolify (OPENAI_API_KEY = clé Claude).
-patch_file "$UP/docker/Dockerfile" 's/^(FROM aio_builder AS aio\n)/$1ENV OPENAI_BASE_URL=https:\/\/api.anthropic.com\/v1\/ \\\n    INFERENCE_TEXT_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_IMAGE_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_OUTPUT_SCHEMA=plain \\\n    INFERENCE_LANG=french \\\n    INFERENCE_MAX_OUTPUT_TOKENS=4096 \\\n    INFERENCE_JOB_TIMEOUT_SEC=120\n/m'
+patch_file "$UP/docker/Dockerfile" 's/^(FROM aio_builder AS aio\n)/$1ENV OPENAI_BASE_URL=https:\/\/api.anthropic.com\/v1\/ \\\n    INFERENCE_TEXT_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_IMAGE_MODEL=$ENV{AI_MODEL} \\\n    INFERENCE_OUTPUT_SCHEMA=plain \\\n    INFERENCE_LANG=french \\\n    INFERENCE_MAX_OUTPUT_TOKENS=4096 \\\n    INFERENCE_JOB_TIMEOUT_SEC=120 \\\n    INFERENCE_CONTEXT_LENGTH=4096\n/m'
+
+echo "→ Grille de tags Polaire (tous les comptes)"
+# Les règles de tagging.ts passent avant les règles personnelles de chaque
+# compte, dans les prompts envoyés à Claude comme dans leur aperçu.
+cp "$HERE/tagging.ts" "$UP/packages/shared/polaire.ts"
+PROMPTS="$UP/packages/shared/prompts.ts"
+patch_file "$PROMPTS" 's|^(import type \{ ZTagStyle \} from "./types/users";\n)|$1import {\n  POLAIRE_IMAGE_RULES,\n  POLAIRE_SUMMARY_RULES,\n  POLAIRE_TEXT_RULES,\n} from "./polaire";\n|m'
+for fn in buildImagePrompt:IMAGE constructTextTaggingPrompt:TEXT constructSummaryPrompt:SUMMARY; do
+  export FN="${fn%%:*}" RULES="POLAIRE_${fn##*:}_RULES"
+  patch_file "$PROMPTS" 's/(export function $ENV{FN}\(\n  lang: string,\n  )customPrompts(: string\[\],\n.*?\n\)(?:: string)? \{\n)/$1userPrompts$2  const customPrompts = [...$ENV{RULES}, ...userPrompts];\n/s'
+done
+# Seuls les tags de la grille (ou de la liste choisie par le compte) sont posés.
+TAGGING="$UP/apps/workers/workers/inference/tagging.ts"
+patch_file "$TAGGING" 's|^(import \{ buildImagePrompt \} from "\@karakeep/shared/prompts";\n)|import { keepGridTags } from "\@karakeep/shared/polaire";\n$1|m'
+patch_file "$TAGGING" 's/await connectTags\(bookmarkId, tags, bookmark\.userId\);/await connectTags(\n    bookmarkId,\n    keepGridTags(tags, curatedTagNames),\n    bookmark.userId,\n  );/'
 
 echo "Charte Polaire appliquée."
